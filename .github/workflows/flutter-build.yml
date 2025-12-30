@@ -91,7 +91,21 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
+      - name: Hardcode My Server IP
+        shell: powershell
+        run: |
+          $path = "libs/hbb_common/src/config.rs"
+          if (Test-Path $path) {
+            $content = Get-Content $path
+            # Nahrazení Rendezvous serveru (ID server)
+            $content = $content -replace 'rs.rustdesk.com', '178.22.114.243'
+            # Nahrazení API serveru (včetně http a portu)
+            $content = $content -replace 'https://api.rustdesk.com', 'http://178.22.114.243:21114'
+            Set-Content $path $content
+            Write-Host "Server settings have been patched successfully!"
+          } else {
+            Write-Error "Could not find config.rs at $path"
+          }
       - name: Restore bridge files
         uses: actions/download-artifact@master
         with:

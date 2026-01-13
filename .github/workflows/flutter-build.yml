@@ -2,6 +2,15 @@ name: Build the flutter version of the RustDesk
 
 on:
   workflow_dispatch:
+    inputs:
+      upload-artifact:
+        type: boolean
+        default: true
+        description: "Upload artifacts"
+      upload-tag:
+        type: string
+        default: "nightly"
+        description: "Tag name"  
   workflow_call:
     inputs:
       upload-artifact:

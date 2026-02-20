@@ -66,7 +66,8 @@ jobs:
           & $env:VCPKG_ROOT\vcpkg.exe install `
             --x-manifest-root "$env:GITHUB_WORKSPACE" `
             --vcpkg-root "$env:VCPKG_ROOT" `
-            --triplet $env:VCPKG_DEFAULT_TRIPLET
+            --triplet x64-windows-static `
+            --host-triplet x64-windows
 
       - name: Flutter pub get
         shell: pwsh

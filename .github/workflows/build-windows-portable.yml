@@ -46,15 +46,28 @@ jobs:
             "LIBCLANG_PATH=$llvmBin" | Out-File -FilePath $env:GITHUB_ENV -Append
           }
 
-      - name: Install vcpkg (manifest mode)
+      - name: Install vcpkg deps (manifest) + force MSBuild generator
         shell: pwsh
         run: |
+          # 1) Clone + bootstrap vcpkg
           git clone https://github.com/microsoft/vcpkg $env:USERPROFILE\vcpkg
           & $env:USERPROFILE\vcpkg\bootstrap-vcpkg.bat
-          "VCPKG_ROOT=$env:USERPROFILE\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Append     
-          # Spustí instalaci podle vcpkg.json v rootu projektu (manifest mode)
-          & $env:USERPROFILE\vcpkg\vcpkg.exe install --triplet x64-windows-static
-          
+      
+          # 2) Okamžitě nastav VCPKG_ROOT v aktuálním stepu (ne až přes GITHUB_ENV)
+          $env:VCPKG_ROOT = "$env:USERPROFILE\vcpkg"
+          "VCPKG_ROOT=$env:VCPKG_ROOT" | Out-File -FilePath $env:GITHUB_ENV -Append
+      
+          # 3) Workaround na ninja.exe -v problém: donuť generator na Visual Studio (MSBuild)
+          $env:VCPKG_CMAKE_GENERATOR = "Visual Studio 17 2022"
+          "VCPKG_CMAKE_GENERATOR=$env:VCPKG_CMAKE_GENERATOR" | Out-File -FilePath $env:GITHUB_ENV -Append
+      
+          # 4) Manifest mode: v repu je vcpkg.json => instalace bez argumentů.
+          #    (Ukotvíme manifest root a vcpkg root explicitně.)
+          & $env:VCPKG_ROOT\vcpkg.exe install `
+            --x-manifest-root "$env:GITHUB_WORKSPACE" `
+            --vcpkg-root "$env:VCPKG_ROOT" `
+            --triplet x64-windows-static
+      
       - name: Flutter pub get
         shell: pwsh
         run: |

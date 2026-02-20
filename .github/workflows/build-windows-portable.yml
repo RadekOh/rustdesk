@@ -1,0 +1,68 @@
+name: Build RustDesk Windows Portable (Flutter)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Enable Flutter Windows Desktop
+        shell: pwsh
+        run: |
+          flutter config --enable-windows-desktop
+          flutter doctor -v
+
+      - name: Install LLVM (for bindgen)
+        shell: pwsh
+        run: |
+          choco install -y llvm --version=15.0.2
+          "LIBCLANG_PATH=C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Install vcpkg + deps
+        shell: pwsh
+        run: |
+          git clone https://github.com/microsoft/vcpkg $env:USERPROFILE\vcpkg
+          & $env:USERPROFILE\vcpkg\bootstrap-vcpkg.bat
+          "VCPKG_ROOT=$env:USERPROFILE\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Append
+          & $env:USERPROFILE\vcpkg\vcpkg.exe install libvpx:x64-windows-static libyuv:x64-windows-static opus:x64-windows-static aom:x64-windows-static
+
+      - name: Flutter pub get
+        shell: pwsh
+        run: |
+          cd flutter
+          flutter pub get
+          cd ..
+
+      - name: Build portable EXE
+        shell: pwsh
+        run: |
+          python build.py --flutter --portable
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rustdesk-windows-portable
+          path: |
+            rustdesk-*-install.exe

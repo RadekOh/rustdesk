@@ -7,6 +7,12 @@ jobs:
   build:
     runs-on: windows-latest
 
+    env:
+      VCPKG_DEFAULT_TRIPLET: x64-windows-static
+      VCPKG_DEFAULT_HOST_TRIPLET: x64-windows
+      VCPKG_CMAKE_GENERATOR: Visual Studio 17 2022
+      VCPKG_DISABLE_METRICS: "1"
+
     steps:
       - name: Checkout (with submodules)
         uses: actions/checkout@v4
@@ -49,25 +55,19 @@ jobs:
       - name: Install vcpkg deps (manifest) + force MSBuild generator
         shell: pwsh
         run: |
-          # 1) Clone + bootstrap vcpkg
           git clone https://github.com/microsoft/vcpkg $env:USERPROFILE\vcpkg
           & $env:USERPROFILE\vcpkg\bootstrap-vcpkg.bat
-      
-          # 2) Okamžitě nastav VCPKG_ROOT v aktuálním stepu (ne až přes GITHUB_ENV)
+
+          # Nastav VCPKG_ROOT hned v aktuálním stepu + i pro další stepy
           $env:VCPKG_ROOT = "$env:USERPROFILE\vcpkg"
           "VCPKG_ROOT=$env:VCPKG_ROOT" | Out-File -FilePath $env:GITHUB_ENV -Append
-      
-          # 3) Workaround na ninja.exe -v problém: donuť generator na Visual Studio (MSBuild)
-          $env:VCPKG_CMAKE_GENERATOR = "Visual Studio 17 2022"
-          "VCPKG_CMAKE_GENERATOR=$env:VCPKG_CMAKE_GENERATOR" | Out-File -FilePath $env:GITHUB_ENV -Append
-      
-          # 4) Manifest mode: v repu je vcpkg.json => instalace bez argumentů.
-          #    (Ukotvíme manifest root a vcpkg root explicitně.)
+
+          # Manifest mode: repo má vcpkg.json => instalace bez vyjmenování balíčků
           & $env:VCPKG_ROOT\vcpkg.exe install `
             --x-manifest-root "$env:GITHUB_WORKSPACE" `
             --vcpkg-root "$env:VCPKG_ROOT" `
-            --triplet x64-windows-static
-      
+            --triplet $env:VCPKG_DEFAULT_TRIPLET
+
       - name: Flutter pub get
         shell: pwsh
         run: |
@@ -86,3 +86,12 @@ jobs:
           name: rustdesk-windows-portable
           path: |
             rustdesk-*-install.exe
+
+      - name: Upload vcpkg logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vcpkg-buildtrees-logs
+          path: |
+            C:\Users\runneradmin\vcpkg\buildtrees\
+            D:\a\rustdesk\rustdesk\vcpkg_installed\

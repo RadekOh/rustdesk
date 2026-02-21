@@ -64,11 +64,23 @@ jobs:
 
           # Manifest mode: repo má vcpkg.json => instalace bez vyjmenování balíčků
           & $env:VCPKG_ROOT\vcpkg.exe install `
-            --x-manifest-root "$env:GITHUB_WORKSPACE" `
-            --vcpkg-root "$env:VCPKG_ROOT" `
-            --triplet x64-windows-static `
-            --host-triplet x64-windows
+          --x-manifest-root "$env:GITHUB_WORKSPACE" `
+          --vcpkg-root "$env:VCPKG_ROOT" `
+          --triplet x64-windows-static `
+          --host-triplet x64-windows
 
+      - name: Show aom config error log (if exists)
+        if: failure()
+        shell: pwsh
+        run: |
+          $p = "C:\Users\runneradmin\vcpkg\buildtrees\aom\config-x64-windows-dbg-err.log"
+          if (Test-Path $p) {
+            Write-Host "=== Tail of $p ==="
+            Get-Content $p -Tail 200
+          } else {
+            Write-Host "No aom err log found at $p"
+          }
+          
       - name: Flutter pub get
         shell: pwsh
         run: |

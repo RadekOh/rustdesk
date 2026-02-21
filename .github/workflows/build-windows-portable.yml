@@ -88,11 +88,18 @@ jobs:
           path: |
             rustdesk-*-install.exe
 
-      - name: Upload vcpkg logs (on failure)
+      - name: Upload vcpkg buildtrees logs (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: vcpkg-buildtrees-logs
           path: |
             C:\Users\runneradmin\vcpkg\buildtrees\
+
+      - name: Upload project vcpkg_installed (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vcpkg-installed-tree
+          path: |
             D:\a\rustdesk\rustdesk\vcpkg_installed\

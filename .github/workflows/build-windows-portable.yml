@@ -10,7 +10,7 @@ jobs:
     env:
       VCPKG_DEFAULT_TRIPLET: x64-windows-static
       VCPKG_DEFAULT_HOST_TRIPLET: x64-windows
-      VCPKG_CMAKE_GENERATOR: Visual Studio 17 2022
+      #VCPKG_CMAKE_GENERATOR: Visual Studio 17 2022
       VCPKG_DISABLE_METRICS: "1"
 
     steps:
@@ -40,16 +40,17 @@ jobs:
           flutter config --enable-windows-desktop
           flutter doctor -v
 
-      - name: Setup LLVM/Clang (for bindgen)
+      - name: Setup LLVM/Clang, NASM & Ninja
         shell: pwsh
         run: |
           $llvmBin = "C:\Program Files\LLVM\bin"
+          
+          # Instalace potřebných build nástrojů přes Chocolatey
+          choco install -y llvm nasm ninja
+          
           if (Test-Path $llvmBin) {
             "LIBCLANG_PATH=$llvmBin" | Out-File -FilePath $env:GITHUB_ENV -Append
-            Write-Host "Using preinstalled LLVM at $llvmBin"
-          } else {
-            choco install -y llvm
-            "LIBCLANG_PATH=$llvmBin" | Out-File -FilePath $env:GITHUB_ENV -Append
+            Write-Host "Using LLVM at $llvmBin"
           }
 
       - name: Install vcpkg deps (manifest) + force MSBuild generator

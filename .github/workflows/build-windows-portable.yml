@@ -40,13 +40,18 @@ jobs:
           flutter config --enable-windows-desktop
           flutter doctor -v
 
-      - name: Setup LLVM/Clang, NASM & Ninja
+      # Přidáme dedikovaný krok pro instalaci a nastavení NASM
+      - name: Install NASM
+        uses: ilammy/setup-nasm@v1
+
+      # Tvůj původní krok, jen jsme z choco instalace odebrali 'nasm'
+      - name: Setup LLVM/Clang & Ninja
         shell: pwsh
         run: |
           $llvmBin = "C:\Program Files\LLVM\bin"
           
-          # Instalace potřebných build nástrojů přes Chocolatey
-          choco install -y llvm nasm ninja
+          # Instalace potřebných build nástrojů přes Chocolatey (bez nasm)
+          choco install -y llvm ninja
           
           if (Test-Path $llvmBin) {
             "LIBCLANG_PATH=$llvmBin" | Out-File -FilePath $env:GITHUB_ENV -Append

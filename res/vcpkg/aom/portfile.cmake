@@ -21,13 +21,10 @@ if(DEFINED ENV{USE_AOM_391})
 else()
     vcpkg_from_git(
         OUT_SOURCE_PATH SOURCE_PATH
-        URL "https://aomedia.googlesource.com/aom"
-        REF 10aece4157eb79315da205f39e19bf6ab3ee30d0 # 3.12.1
+        URL "https://aomedia.googlesource.com/aom"       
+        REF 6d2b7f71b98bfa28e372b1f2d85f137280bdb3de
         PATCHES
             aom-uninitialized-pointer.diff
-            aom-nasm3-detect.diff
-            # aom-avx2.diff
-            # Can be dropped when https://bugs.chromium.org/p/aomedia/issues/detail?id=3029 is merged into the upstream
             aom-install.diff
     )
 endif()
